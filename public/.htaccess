@@ -1,0 +1,24 @@
+# 启用重写引擎
+RewriteEngine On
+
+# 设置基础路径
+RewriteBase /
+
+# 将歌曲URL重写为友好URL
+RewriteRule ^song/([a-zA-Z0-9-]+)/?$ /#$1 [L,NC]
+
+# 添加缓存控制
+<FilesMatch "\.(flac|mp3)$">
+Header set Cache-Control "max-age=2592000"
+</FilesMatch>
+
+# 压缩文本文件
+<IfModule mod_deflate.c>
+AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json
+</IfModule>
+
+# 设置字符集
+AddDefaultCharset UTF-8
+
+# 防止目录浏览
+Options -Indexes
