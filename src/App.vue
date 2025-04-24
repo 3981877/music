@@ -87,7 +87,14 @@ onMounted(async () => {
   const res = await fetch('/music-list.json')
   if (res.ok) {
     const list = await res.json()
-    songs.value = list
+    // 确保所有歌曲的src路径格式正确
+    songs.value = list.map(song => {
+      // 如果src不是以/开头，添加/前缀
+      if (song.src && !song.src.startsWith('/')) {
+        song.src = '/' + song.src
+      }
+      return song
+    })
     // 初始加载时更新SEO元标签
     if (list.length > 0 && list[currentIndex.value] && list[currentIndex.value].title) {
       updateMetaTags(list[currentIndex.value].title)
