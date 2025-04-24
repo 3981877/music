@@ -10,6 +10,16 @@ import { ref, onMounted, computed } from 'vue'
 const songs = ref([])
 const currentIndex = ref(0)
 const playMode = ref('list') // 播放模式：'single'单曲循环, 'random'随机播放, 'list'列表循环
+const searchQuery = ref('') // 搜索关键词
+
+// 过滤后的歌曲列表
+const filteredSongs = computed(() => {
+  if (!searchQuery.value.trim()) return songs.value
+  const query = searchQuery.value.toLowerCase().trim()
+  return songs.value.filter(song => 
+    song.title.toLowerCase().includes(query)
+  )
+})
 
 // SEO优化 - 动态更新页面标题和描述
 const updateMetaTags = (songTitle) => {
@@ -30,10 +40,24 @@ const isTitleLong = computed(() => {
 
 // Copyright © C&L - 事件处理函数
 function handleSelect(idx) {
-  currentIndex.value = idx
+  // 如果有搜索关键词，需要将过滤后的索引映射回原始歌曲列表的索引
+  if (searchQuery.value.trim()) {
+    // 获取过滤后歌曲列表中选中的歌曲
+    const selectedSong = filteredSongs.value[idx]
+    // 在原始歌曲列表中查找对应歌曲的索引
+    const originalIndex = songs.value.findIndex(song => song.src === selectedSong.src)
+    // 设置为原始列表中的索引
+    if (originalIndex !== -1) {
+      currentIndex.value = originalIndex
+    }
+  } else {
+    // 没有搜索关键词时，直接使用传入的索引
+    currentIndex.value = idx
+  }
+  
   // 更新SEO元标签
-  if (songs.value[idx]) {
-    updateMetaTags(songs.value[idx].title)
+  if (songs.value[currentIndex.value]) {
+    updateMetaTags(songs.value[currentIndex.value].title)
   }
 }
 
@@ -108,7 +132,17 @@ onMounted(async () => {
   <div class="app-wrapper">
     <div class="app-bg">
       <div class="app-container">
-        <h1 class="main-title">C&L</h1>
+        <div class="search-container">
+          <input 
+            type="text" 
+            v-model="searchQuery" 
+            class="search-input" 
+            placeholder="搜索歌曲..." 
+          />
+          <button class="search-button" title="搜索">
+            <span>🔍</span>
+          </button>
+        </div>
         
         <div class="side-layout">
           <!-- 内容区 - 直接显示，不再使用侧边栏 -->
@@ -172,7 +206,7 @@ onMounted(async () => {
             </div>
             
             <SongList 
-              :songs="songs" 
+              :songs="filteredSongs" 
               :currentIndex="currentIndex" 
               @select="handleSelect" 
             />
@@ -232,17 +266,71 @@ onMounted(async () => {
   transition: all 0.3s ease;
 }
 
-.main-title {
-  font-size: 2.5rem;
-  font-weight: 800;
-  margin: 0 0 30px 0;
-  color: #5a36b5;
-  text-align: center;
-  background: linear-gradient(to right, #667eea, #764ba2);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+.search-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 20px auto; /* 修改为auto使其水平居中 */
+  width: 100%; /* 与内容区域保持一致 */
+  max-width: 100%; /* 与内容区域保持一致 */
   position: relative;
-  width: 100%;
+  overflow: hidden;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.search-input {
+  flex: 1;
+  height: 44px;
+  border-radius: 22px 0 0 22px;
+  border: 2px solid rgba(118, 75, 162, 0.2);
+  border-right: none;
+  padding: 0 24px;
+  font-size: 16px;
+  background-color: rgba(255, 255, 255, 0.9);
+  color: #333;
+  outline: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.search-input:focus {
+  border-color: rgba(118, 75, 162, 0.5);
+  box-shadow: 0 4px 15px rgba(118, 75, 162, 0.15);
+  background-color: white;
+}
+
+.search-button {
+  height: 44px;
+  width: 60px;
+  border-radius: 0 22px 22px 0;
+  border: 2px solid rgba(118, 75, 162, 0.2);
+  border-left: none;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.search-button:hover {
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  box-shadow: 0 6px 16px rgba(118, 75, 162, 0.25);
+  transform: translateY(-1px);
+}
+
+.search-button span {
+  display: inline-block;
+  transition: transform 0.3s ease;
+}
+
+.search-button:hover span {
+  transform: scale(1.1);
 }
 
 .side-layout {
@@ -408,6 +496,12 @@ onMounted(async () => {
     max-width: 100%;
     margin: 0;
     height: auto;
+    box-sizing: border-box; /* 确保padding不会增加宽度 */
+  }
+  
+  .search-container {
+    width: calc(100% - 20px); /* 与内容区域保持一致的宽度 */
+    margin: 20px 10px; /* 与内容区域保持一致的边距 */
     box-sizing: border-box; /* 确保padding不会增加宽度 */
   }
   
