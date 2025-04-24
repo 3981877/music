@@ -24,9 +24,9 @@ dist-ssr
 *.sw?
 
 # Music files
-public/*.mp3
-public/*.flac
-public/*.wav
-public/*.ogg
-public/*.aac
-public/*.m4a
+**/*.mp3
+**/*.flac
+**/*.wav
+**/*.ogg
+**/*.aac
+**/*.m4a
